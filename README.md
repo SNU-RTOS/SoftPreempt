@@ -24,7 +24,7 @@ OpenCL_Kernel_Scheduler/
         CL/
 OpenCL_Shim/            
     libOpenCL_shim_profiling.cpp # OpenCL shim for profiling
-    libOpenCL_shim.cpp   # OpenCL shim for intercept API calls from user processes
+    libOpenCL_shim.cpp   # OpenCL shim for intercepting API calls from user processes
 ```
 
 ## Building
