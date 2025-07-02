@@ -6,7 +6,6 @@ SoftPreempt is a research project focused on software-level GPU preemption that 
 
 - **OpenCL Kernel Scheduler**: A user-space scheduler for OpenCL kernels, supporting priority queues and advanced scheduling algorithms.
 - **OpenCL Shim**: Library (`libOpenCL_shim.so`) for intercepting OpenCL API calls of user processes and forwarding them to the OpenCL kernel scheduler.
-- **Common Utilities**: Utilities for image processing, inter-process communication, and logging to support kernel scheduling experiments.
 
 ## Directory Structure
 
@@ -23,7 +22,7 @@ OpenCL_Kernel_Scheduler/
         priority_kernel_queue.hpp
         CL/
 OpenCL_Shim/            
-    libOpenCL_shim_profiling.cpp # OpenCL shim for profiling
+    libOpenCL_shim_profiling.cpp # OpenCL shim for profiling purpose
     libOpenCL_shim.cpp   # OpenCL shim for intercepting API calls from user processes
 ```
 
