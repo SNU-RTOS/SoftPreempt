@@ -1,0 +1,5 @@
+*.so
+bin/
+*.txt
+*.log
+*.png
