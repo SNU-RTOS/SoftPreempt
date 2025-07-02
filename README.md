@@ -1,4 +1,4 @@
-# SoftPreempt:  A Software-Level GPU Preemption Mechanism for Multi-DNN Inference with Mixed Priorities in AIoT Systems
+# SoftPreempt
 
 SoftPreempt is a research project focused on software-level GPU preemption that does not require any kind of modification to hardware, system software (kernel), or user code. It intercepts OpenCL API calls from the user process and schedules it based on process priority for GPU preemption.
 
