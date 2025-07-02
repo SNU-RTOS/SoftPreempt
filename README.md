@@ -1,6 +1,6 @@
 # SoftPreempt
 
-SoftPreempt is a research project focused on software-level GPU preemption that does not require any kind of modification to hardware, system software (kernel), or user code. It intercepts OpenCL API calls from the user process and schedules it based on process priority for GPU preemption.
+SoftPreempt is a research project focused on software-level GPU preemption that does not require any kind of modification to hardware, system software (kernel), and user code. It intercepts OpenCL API calls from the user process and schedules it based on process priority for GPU preemption.
 
 ## Features
 
@@ -35,13 +35,13 @@ To build the project and all components, run:
 ./build.sh
 ```
 
-The resulting binaries and libraries will be placed in the `bin/` directory and the project root.
+The resulting binaries and libraries will be placed in the `bin/` directory and the project root, respectively.
 
 ## Usage
 
 ### Applying the OpenCL Shim
 
-To use the OpenCL shim library system-wide, follow these steps:
+To use the OpenCL shim library, follow these steps:
 
 1. **Rename the Vendor Library**  
    Rename your existing vendor OpenCL library (typically in `/usr/lib`) to `libOpenCL_vendor.so`:
@@ -73,7 +73,9 @@ Run the kernel scheduler binary from `bin/opencl_kernel_scheduler`.
 
 ### Running applications
 
-Now, you can run applications that uses LiteRT v1.4.0. We currently support only LiteRT. Or you can make up your own OpenCL kernels and test it.
+Now, you can run an application that uses LiteRT v1.4.0. We currently support only LiteRT. 
+
+Or you can make up your own application that directly uses OpenCL and test it.
 
 To assign priority to applications, you should run it with:
    ```sh
