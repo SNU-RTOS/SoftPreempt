@@ -1206,7 +1206,7 @@ void* kernel_scheduling_thread(void*){
                     // Update MAX_KERNEL_EXECUTION_TIME_NS if needed
                     if(kernel_time_ns > MAX_KERNEL_EXECUTION_TIME_NS) {
                         MAX_KERNEL_EXECUTION_TIME_NS = (kernel_time_ns / 1000000) * 1000000; // round to ms
-                        LOG_INFO("[SCHEDULER] Updated MAX_KERNEL_EXECUTION_TIME_NS to " << MAX_KERNEL_EXECUTION_TIME_NS / 1000000 << " ms")
+                        LOG_INFO("[SCHEDULER] Updated MAX_KERNEL_EXECUTION_TIME_NS to " << MAX_KERNEL_EXECUTION_TIME_NS / 1000000 << " ms");
                     }
 
                     LOG_INFO("[SCHEDULER] Kernel " << kernel_request_info._cl_kernel << " execution time: " << kernel_time_ns << " ns"
