@@ -1249,7 +1249,7 @@ void* kernel_scheduling_thread(void*){
                         // Case 1-2: There are kernels being exectued or waiting to be executed
                         else {
                             cl_int status = clFlushFn(_cl_command_queue);
-                            std::this_thread::sleep_for(std::chrono::microseconds(total_queued_kernel_execution_time_ns/1000)); // TODO: Change this to account kernel that is being executed in the GPU
+                            std::this_thread::sleep_for(std::chrono::microseconds(total_queued_kernel_execution_time_ns/1000));
                             total_queued_kernel_execution_time_ns = 0; // reset after waiting
                             continue; // continue, since we do not enqueue the current one
                         }
