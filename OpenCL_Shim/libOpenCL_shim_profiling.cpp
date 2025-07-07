@@ -14,6 +14,7 @@
 #include <dlfcn.h>
 #include <iostream>
 #include <linux/memfd.h>
+#include <queue>
 #include <sched.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -22,7 +23,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <unordered_map>
-#include <queue>
 #include "image_utils.hpp"
 #include "ipc.hpp"
 #include "logging.hpp"

@@ -7,6 +7,7 @@
  ********************************************************/
 
 #define CL_TARGET_OPENCL_VERSION 300
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cstring>
@@ -1181,13 +1182,20 @@ void* kernel_scheduling_thread(void*){
 
             // Enqueue kernel
             if(kernel_request_info.type==TYPE_NDRANGE_KERNEL){                           
+
+                // Setting local_size_ptr to handle when the local size passed from OpenCL shim is empty or all zeros
+                const size_t* local_size_ptr = 
+                (kernel_request_info.local_size.empty() || 
+                std::all_of(kernel_request_info.local_size.begin(), kernel_request_info.local_size.end(), [](size_t x) { return x == 0; }))
+                ? nullptr : kernel_request_info.local_size.data();
+
                 // Profiling kernel execution time
                 if(kernel_to_execution_time_map[kernel_request_info._cl_kernel] == 0) {
                     cl_event kernel_event;
                     clEnqeueuNDRangeKernelFn(_cl_command_queue,kernel_request_info._cl_kernel,kernel_request_info.work_dim,
                         kernel_request_info.global_offset.data(),
                         kernel_request_info.global_size.data(),
-                        kernel_request_info.local_size.data(),
+                        local_size_ptr,
                         0,nullptr,&kernel_event);
                     cl_int status = clFlushFn(_cl_command_queue);
                     clWaitForEventsFn(1, &kernel_event);
@@ -1230,7 +1238,7 @@ void* kernel_scheduling_thread(void*){
                                 clEnqeueuNDRangeKernelFn(_cl_command_queue,kernel_request_info._cl_kernel,kernel_request_info.work_dim,
                                     kernel_request_info.global_offset.data(),
                                     kernel_request_info.global_size.data(),
-                                    kernel_request_info.local_size.data(),
+                                    local_size_ptr,
                                     0,nullptr, &kernel_update_event); //
                                 clSetEventCallbackFn(kernel_update_event, CL_COMPLETE, kernel_execution_time_update_callback, kernel_request_info._cl_kernel);
                             } 
@@ -1239,7 +1247,7 @@ void* kernel_scheduling_thread(void*){
                                 clEnqeueuNDRangeKernelFn(_cl_command_queue,kernel_request_info._cl_kernel,kernel_request_info.work_dim,
                                     kernel_request_info.global_offset.data(),
                                     kernel_request_info.global_size.data(),
-                                    kernel_request_info.local_size.data(),
+                                    local_size_ptr,
                                     0,nullptr,nullptr);
                             }
                             // Executing the largest kernel in the system
@@ -1263,7 +1271,7 @@ void* kernel_scheduling_thread(void*){
                             clEnqeueuNDRangeKernelFn(_cl_command_queue,kernel_request_info._cl_kernel,kernel_request_info.work_dim,
                                 kernel_request_info.global_offset.data(),
                                 kernel_request_info.global_size.data(),
-                                kernel_request_info.local_size.data(),
+                                local_size_ptr,
                                 0,nullptr, &kernel_update_event);
                             clSetEventCallbackFn(kernel_update_event, CL_COMPLETE, kernel_execution_time_update_callback, kernel_request_info._cl_kernel);
                         } 
@@ -1272,7 +1280,7 @@ void* kernel_scheduling_thread(void*){
                             clEnqeueuNDRangeKernelFn(_cl_command_queue,kernel_request_info._cl_kernel,kernel_request_info.work_dim,
                                 kernel_request_info.global_offset.data(),
                                 kernel_request_info.global_size.data(),
-                                kernel_request_info.local_size.data(),
+                                local_size_ptr,
                                 0,nullptr,nullptr);
                         }
                         total_queued_kernel_execution_time_ns += kernel_time_ns;
@@ -1299,8 +1307,6 @@ void* kernel_scheduling_thread(void*){
             * We also treat read/write buffer as a kernel, since it is a blocking call
             * With the DNN models we've used, the read/write duration does not exceed 2 ms even under GPU contention
             * So we fix the read/write time as 2 ms
-            * Also, in unified memory architecture, which majority of AIoT systems have,
-            * read/write buffer command can be totally eliminated by using buffer sharing
             */
             else if(kernel_request_info.type==TYPE_READ_BUFFER){
                 if(total_queued_kernel_execution_time_ns + 2000000 > MAX_KERNEL_EXECUTION_TIME_NS && total_queued_kernel_execution_time_ns != 0) {
