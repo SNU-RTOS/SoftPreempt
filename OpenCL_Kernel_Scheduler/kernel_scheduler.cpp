@@ -39,21 +39,21 @@
 
 /* === Variable Naming Conventions === */
 /*
-* Variables with _cl_ prefix are the variables created through the vendor OpenCL library
+* Variables with _cl_ prefix are the variables created through the vendor-provided OpenCL library
 * variables without _cl_ prefix are the variables of OpenCL Kernel Scheduler
 */
 
 /* === Global Variables === */
-// System-wide vendor OpenCL library pointer
+// Vendor-provided OpenCL library pointer
 void* vendor_opencl_lib = nullptr;
 
-// System-wide OpenCL objects: platform, device, context, and command queue
+// Global OpenCL objects: platform, device, context, and command queue
 cl_platform_id _cl_platform = nullptr;
 cl_device_id _cl_device = nullptr;
 cl_context _cl_context = nullptr;
 cl_command_queue _cl_command_queue = nullptr;
 
-// System-wide ResourceIds for platform, device, and context
+// Global ResourceIds for platform, device, and context
 ResourceId platform_rid = 0;
 ResourceId device_rid = 0;  
 ResourceId context_rid = 0; 

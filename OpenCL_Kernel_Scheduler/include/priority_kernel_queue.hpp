@@ -6,7 +6,7 @@
  * Description: Priority Kernel Queue Implementation
  ********************************************************/
 
-
+// Priority kernel queue is a lock-free single-producer, single-consumer queue
 template<typename T, size_t N = 2048>
 struct PriorityKernelQueue {
     static_assert((N & (N - 1)) == 0, "N must be power-of-two");
@@ -15,8 +15,8 @@ struct PriorityKernelQueue {
     T buf[N];
 
     bool push(T&& v, bool& was_empty) {
-        size_t t = tail.load(std::memory_order_relaxed);
         size_t h = head.load(std::memory_order_acquire);
+        size_t t = tail.load(std::memory_order_relaxed);
         if (t - h == N) return false;      // full
 
         was_empty = (t == h);

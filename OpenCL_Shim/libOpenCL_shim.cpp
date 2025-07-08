@@ -8,7 +8,6 @@
 
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
-#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -26,8 +25,6 @@
 #include "ipc.hpp"
 #include "logging.hpp"
 
-typedef void* FuncPtr;
-
 /* === Global Variables === */
 
 // To reduce the number of IPC, we batch the kernel enqueue requests
@@ -35,6 +32,7 @@ constexpr size_t MAX_KERNEL_BATCH_SIZE = 8;
 std::unordered_map<cl_command_queue, std::vector<KernelEnqueueInfo>> kernel_requests_in_batch; // command queue to kernel request info vector map
 std::unordered_map<cl_kernel, std::vector<KernelArg>> arg_map; // kernel to argument vector map, for passing kernel arguments
 
+typedef void* FuncPtr;
 struct FunctionEntry {
     const char* name;
     FuncPtr pointer;
@@ -85,41 +83,64 @@ uint32_t priority = 0; // lowest priority as default
 
 /* === Inline Functions === */
 
-// Function for creating a shared memory buffer
-static inline int create_memfd(const char* tag, size_t sz, void** map) {
+// Creates an anonymous in-memory file (memfd), resizes it, and maps it into memory
+static inline int create_memfd(const char* tag, size_t sz, void** file) {
+    // Create an anonymous memory-backed file with close-on-exec flag
     int fd = syscall(SYS_memfd_create, tag, MFD_CLOEXEC);
+
+    // Resize the in-memory file to the desired size
     ftruncate(fd, sz);
-    *map = mmap(nullptr, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+
+    // Map the file (file) into memory with read/write permissions
+    *file = mmap(nullptr, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+
     return fd;
 }
 
-// Function for sending the address of the shared memory
+// Send a file descriptor (fd) and a header struct (hdr) over a UNIX domain socket (sock)
 static inline void send_fd_with_hdr(int sock, int fd, const ShmHeader& hdr) {
+    // Prepare the header
     struct iovec iov{ const_cast<ShmHeader*>(&hdr), sizeof(hdr) };
-    char ctrl[CMSG_SPACE(sizeof(fd))] = {};
-    msghdr msg{};
-    msg.msg_iov = &iov;  msg.msg_iovlen = 1;
-    msg.msg_control = ctrl; msg.msg_controllen = sizeof(ctrl);
 
-    cmsghdr* c = CMSG_FIRSTHDR(&msg);
-    c->cmsg_level = SOL_SOCKET;
-    c->cmsg_type  = SCM_RIGHTS;
-    c->cmsg_len   = CMSG_LEN(sizeof(fd));
+    // Allocate buffer for the control message (enough for 1 file descriptor)
+    char ctrl[CMSG_SPACE(sizeof(fd))] = {};
+
+    // Set up the message header for sendmsg
+    msghdr msg{};
+    msg.msg_iov = &iov;                  // Points to data buffer
+    msg.msg_iovlen = 1;                  // One data buffer
+    msg.msg_control = ctrl;              // Points to control message buffer
+    msg.msg_controllen = sizeof(ctrl);   // Size of control message buffer
+
+    // Prepare the control message to send the file descriptor
+    cmsghdr* c = CMSG_FIRSTHDR(&msg);    // Get pointer to first control message
+    c->cmsg_level = SOL_SOCKET;          // Indicates socket-level control message
+    c->cmsg_type  = SCM_RIGHTS;          // We're sending a file descriptor
+    c->cmsg_len   = CMSG_LEN(sizeof(fd)); // Length of this control message
+
+    // Copy the file descriptor into the control message payload
     memcpy(CMSG_DATA(c), &fd, sizeof(fd));
+
+    // Send the message with both the header and file descriptor
     sendmsg(sock, &msg, 0);
 }
 
-// Function for making socket connection with the OpenCL kernel scheduler with integer return type
+// Connects to the OpenCL kernel scheduler via UNIX domain socket
+// Returns the socket file descriptor on success, or CL_OUT_OF_HOST_MEMORY on failure
 static inline int connect_to_kernel_scheduler_int() {
+    // Create a UNIX domain socket
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
         perror("socket connection error");
         return CL_OUT_OF_HOST_MEMORY;
     }
 
+    // Set up the socket address structure
     struct sockaddr_un addr = {};
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
+
+    // Attempt to connect to the server socket
     if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         perror("connect");
         close(sock);
@@ -129,7 +150,8 @@ static inline int connect_to_kernel_scheduler_int() {
     return sock;
 }
 
-// Function for making socket connection with the OpenCL kernel scheduler with integer pointer return type
+// Connects to the OpenCL kernel scheduler via UNIX domain socket
+// Returns the socket file descriptor on success, or nullptr on failure
 static inline int* connect_to_kernel_scheduler_ptr() {
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -151,7 +173,7 @@ static inline int* connect_to_kernel_scheduler_ptr() {
 
 /* === End of Inline Functions === */
 
-/* === Helper Functions */
+/* === Helper Functions === */
 
 // Helper function to send batch of kernel execution requests
 cl_int send_kernel_execution_requests(cl_command_queue queue) {
@@ -649,8 +671,6 @@ cl_command_queue clCreateCommandQueueWithProperties(cl_context context,
         delete sock_ptr;  // Clean up the pointer after use
     }
 
-
-
     uint32_t req_type = REQ_CREATE_COMMAND_QUEUE_WITH_PROPERTIES;
     write(sock, &req_type, sizeof(req_type));
     write(sock, &context, sizeof(context));
@@ -1092,7 +1112,7 @@ cl_int clFinish(cl_command_queue command_queue) {
 
     return (send_request_status != CL_SUCCESS) ? send_request_status : status;
 }
-// ===== End of Device Functions =====
 
+} /* === End of Extern "C" === */  
 
-} // end of extern "C" 
+/* === END OF FILE === */
