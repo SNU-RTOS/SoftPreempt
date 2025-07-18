@@ -7,8 +7,8 @@
 # libOpenCL_shim.so
 g++ -shared -w -fPIC -O2 -I./common ./OpenCL_Shim/libOpenCL_shim.cpp -ldl -pthread -o libOpenCL_shim.so
 
-# libOpenCL_shim_profiling.so
-g++ -shared -w -fPIC -O2 -I./common ./OpenCL_Shim/libOpenCL_shim_profiling.cpp -ldl -pthread -o libOpenCL_shim_profiling.so
+# libOpenCL_profiling_shim.so
+g++ -shared -w -fPIC -O2 -I./common ./OpenCL_Shim/libOpenCL_profiling_shim.cpp -ldl -pthread -o libOpenCL_profiling_shim.so
 
 # OpenCL Kernel Scheduler
 mkdir -p bin
