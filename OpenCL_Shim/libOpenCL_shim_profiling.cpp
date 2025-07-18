@@ -23,8 +23,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <unordered_map>
-#include "image_utils.hpp"
-#include "ipc.hpp"
+
 #include "logging.hpp"
 
 typedef void* FuncPtr;
@@ -72,13 +71,13 @@ void* load_vendor_func(const char* name) {
     if (!vendor_opencl_lib) {
         vendor_opencl_lib = dlopen("/usr/lib/libOpenCL_vendor.so", RTLD_NOW | RTLD_LOCAL); // /opt/qti/usr/lib/libOpenCL.so.adreno
         if (!vendor_opencl_lib) {
-            LOG_ERROR("[SCHEDULER] dlopen failed: " << dlerror());
+            std::cerr << "[SHIM] dlopen failed: " << std::endl;
             exit(1);
         }
     }
     void* sym = dlsym(vendor_opencl_lib, name);
     if (!sym) {
-        LOG_ERROR("[SCHEDULER] dlsym failed for " << name << ": " << dlerror());
+        std::cerr << "[SHIM] dlsym failed" << std::endl;
         exit(1);
     }
     return sym;
@@ -89,14 +88,13 @@ extern "C" {   // <-- C linkage to avoid function name mangling of g++ compiler
 // The function is called when the library is loaded
 __attribute__((constructor))
 void on_shim_load() {
-    LOG_INFO("[SHIM] libOpenCL_shim_internal.so loaded!\n");
     std::cout << "[SHIM] libOpenCL_shim_internal.so loaded!\n" << std::endl;
 
     // Load the vendor-provided OpenCL library
     if (!vendor_opencl_lib) {
         vendor_opencl_lib = dlopen("/usr/lib/libOpenCL_vendor.so", RTLD_NOW | RTLD_LOCAL);
         if (!vendor_opencl_lib) {
-            LOG_ERROR("[SCHEDULER] dlopen failed: " << dlerror());
+            std::cerr << "[SCHEDULER] dlopen failed: " << std::endl;
             exit(1);
         }
     }
@@ -105,25 +103,25 @@ void on_shim_load() {
 // Function pointer
 void* clGetExtensionFunctionAddress(const char* func_name) {
     if (!func_name) {
-        LOG_ERROR("[SHIM] clGetExtensionFunctionAddress called with NULL func_name");
+        std::cerr << "[SHIM] clGetExtensionFunctionAddress called with NULL func_name" << std::endl;
         return nullptr;
     }
 
-    LOG_INFO("[SHIM] clGetExtensionFunctionAddress called for: " << func_name);
+    std::cout << "[SHIM] clGetExtensionFunctionAddress called for: " << func_name << std::endl;
 
     for (const FunctionEntry* entry = scheduler_function_table; entry->name != nullptr; ++entry) {
         if (strcmp(entry->name, func_name) == 0) {
-            LOG_INFO("[SHIM] Found function: " << func_name << " → " << entry->pointer);
+            std::cout << "[SHIM] Found function: " << func_name << " → " << entry->pointer << std::endl;
             return entry->pointer;
         }
     }
 
-    LOG_ERROR("[SHIM] Function not found: " << func_name);
+    std::cerr << "[SHIM] Function not found: " << func_name << std::endl;
     return nullptr;
 }
 
 void* clGetExtensionFunctionAddressForPlatform(cl_platform_id platform, const char* func_name) {
-    LOG_INFO("[SHIM] clGetExtensionFunctionAddressForPlatform called for: " << func_name);
+    std::cout << "[SHIM] clGetExtensionFunctionAddressForPlatform called for: " << func_name << std::endl;
     return clGetExtensionFunctionAddress(func_name);
 }
 
@@ -235,9 +233,6 @@ cl_int clSetKernelArg(cl_kernel kernel,
     cl_uint arg_index,
     size_t arg_size,
     const void* arg_value) {
-    KernelArg arg;
-    arg.index = arg_index;
-    arg.size = arg_size;
     
     cl_int status;
     auto clSetKernelArgFn = (cl_int (*)(cl_kernel, cl_uint, size_t, const void*))load_vendor_func("clSetKernelArg");
@@ -343,7 +338,6 @@ void CL_CALLBACK time_profiling_callback(cl_event event, cl_int exec_status, voi
     clReleaseEventFn(event);
 }
 
-// Note: Currently events are not supported
 cl_int clEnqueueWriteBuffer(cl_command_queue queue,
     cl_mem buffer,
     cl_bool blocking_write,
@@ -372,7 +366,6 @@ cl_int clEnqueueNDRangeKernel(cl_command_queue queue,
     const cl_event* event_wait_list,
     cl_event* event) {
     
-    // std::cout << "[SHIM PROF] NEW SHIM" << std::endl;
     cl_int status;
     auto clEnqueueNDRangeKernelFn=(cl_int(*)(cl_command_queue,cl_kernel,cl_uint,const size_t*,const size_t*,const size_t*,cl_uint,const cl_event*,cl_event*))load_vendor_func("clEnqueueNDRangeKernel");
     auto clSetEventCallbackFn = (cl_int (*)(cl_event, cl_int, void (*)(cl_event, cl_int, void*), void*)) load_vendor_func("clSetEventCallback");
