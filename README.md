@@ -22,7 +22,7 @@ OpenCL_Kernel_Scheduler/
         priority_kernel_queue.hpp
         CL/
 OpenCL_Shim/            
-    libOpenCL_shim_profiling.cpp # OpenCL shim for profiling purpose
+    libOpenCL_profiling_shim.cpp # OpenCL shim for profiling purpose
     libOpenCL_shim.cpp   # OpenCL shim for intercepting API calls from user processes
 ```
 
@@ -62,7 +62,7 @@ To use the OpenCL shim library, follow these steps:
 
 Now, all OpenCL applications on the system will use the shim library transparently.
 
-> **Note:** To use `libOpenCL_shim_profilig.so`, follow the same steps above but with `libOpenCL_shim.so` as `libOpenCL_shim_profilig.so`
+> **Note:** To use `libOpenCL_profiling_shim.so`, follow the same steps above but with `libOpenCL_shim.so` as `libOpenCL_profiling_shim.so`
 
 > **Note:** You can revert these changes by `ldconfig`. 
 
