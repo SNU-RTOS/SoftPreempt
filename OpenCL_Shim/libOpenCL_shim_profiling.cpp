@@ -24,8 +24,6 @@
 #include <unistd.h>
 #include <unordered_map>
 
-#include "logging.hpp"
-
 typedef void* FuncPtr;
 
 struct FunctionEntry {
