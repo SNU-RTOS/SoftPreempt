@@ -545,8 +545,6 @@ cl_kernel clCreateKernel(cl_program program,
         delete sock_ptr;  // Clean up the pointer after use
     }
 
-
-
     uint32_t req_type = REQ_CREATE_KERNEL;
     cl_uint name_len = std::strlen(kernel_name);
 
@@ -579,8 +577,6 @@ cl_mem clCreateBuffer(cl_context context,
         sock = *sock_ptr;
         delete sock_ptr;  // Clean up the pointer after use
     }
-
-
 
     // decide whether we need shared memory
     bool need_shm = (host_ptr && (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)));
@@ -925,8 +921,6 @@ cl_mem clCreateImage(cl_context context,
         delete sock_ptr;  // Clean up the pointer after use
     }
 
-
-
     uint32_t req_type = REQ_CREATE_IMAGE;
     write(sock, &req_type, sizeof(req_type));
     write(sock, &flags, sizeof(flags));
@@ -988,8 +982,6 @@ cl_mem clCreateSubBuffer(cl_mem buffer,
         sock = *sock_ptr;
         delete sock_ptr;  // Clean up the pointer after use
     }
-
-
 
     uint32_t req_type = REQ_CREATE_SUBBUFFER;
     write(sock, &req_type, sizeof(req_type));

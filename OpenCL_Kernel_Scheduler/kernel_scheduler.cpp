@@ -47,18 +47,18 @@
 // Vendor-provided OpenCL library pointer
 void* vendor_opencl_lib = nullptr;
 
-// Global OpenCL objects: platform, device, context, and command queue
+// Handles to OpenCL objects: platform, device, context, and command queue
 cl_platform_id _cl_platform = nullptr;
 cl_device_id _cl_device = nullptr;
 cl_context _cl_context = nullptr;
 cl_command_queue _cl_command_queue = nullptr;
 
-// Global ResourceIds for platform, device, and context
+// ResourceIds for platform, device, and context
 ResourceId platform_rid = 0;
 ResourceId device_rid = 0;  
 ResourceId context_rid = 0; 
 
-// Global counters to guarantee unique ResourceId
+// Counters to guarantee unique ResourceId
 static uint64_t program_rid_counter = 1;
 static uint64_t kernel_rid_counter = 1;
 static uint64_t mem_rid_counter = 1;
@@ -71,7 +71,7 @@ std::unordered_map<ResourceId, cl_mem> mem_rid_to_cl_map;
 std::unordered_map<cl_kernel, cl_ulong> kernel_to_execution_time_map;
 std::unordered_map<cl_kernel, uint32_t> kernel_to_execution_count_map;
 
-// Variables related to priority arbitration
+// Variables for priority arbitration
 constexpr uint32_t PRIORITY_LEVELS = 256; // We support between 0 - 100 but we define 256 for implementation ease
 std::unordered_map<pid_t, uint32_t> pid_to_priority_map; // Map from process ID to priority level
 static std::atomic<uint64_t> top_bitmap = 0; // bitmap for the top-level priorities
@@ -79,7 +79,7 @@ static std::atomic<uint64_t> priority_bitmap[(PRIORITY_LEVELS + 63) / 64] = {}; 
 static std::array<PriorityKernelQueue<KernelRequestInfo, 2048>, PRIORITY_LEVELS> priority_kernel_queue;
 std::unordered_map<ResourceId, std::atomic<int>> remaining_kernel_request_per_proc; // For tracking the number of kernels in the priority kernel queue per process, maps command queue rid to the number of kernels
 
-// Condition variables to handle clFinish calls from user process
+// Condition variables to handle clFinish calls from user processes
 std::unordered_map<ResourceId, std::condition_variable> clFinish_cvars;
 std::unordered_map<ResourceId, std::mutex> clFinish_mutexes;
 
@@ -157,9 +157,9 @@ inline uint32_t get_highest_priority() {
     uint64_t top = top_bitmap.load(std::memory_order_relaxed);
     if (top == 0) return PRIORITY_LEVELS;
 
-    uint32_t idx = 63 - __builtin_clzll(top); // MSB
+    uint32_t idx = 63 - __builtin_clzll(top); // returns the index of the highest set bit (MSB)
     uint64_t bits = priority_bitmap[idx].load(std::memory_order_relaxed);
-    uint32_t bit = 63 - __builtin_clzll(bits); // MSB
+    uint32_t bit = 63 - __builtin_clzll(bits);
     return idx * 64 + bit;
 }
 
