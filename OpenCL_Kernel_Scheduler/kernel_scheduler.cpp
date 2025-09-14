@@ -39,8 +39,8 @@
 
 /* === Variable Naming Conventions === */
 /*
-* Variables with _cl_ prefix are the variables created through the vendor-provided OpenCL library
-* variables without _cl_ prefix are the variables of OpenCL Kernel Scheduler
+* Variables with _cl_ prefix are variables created through vendor-provided OpenCL library
+* variables without _cl_ prefix are variables of the OpenCL Kernel Scheduler
 */
 
 /* === Global Variables === */
