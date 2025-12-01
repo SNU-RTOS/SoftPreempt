@@ -1,6 +1,7 @@
 # SoftPreempt
 
 SoftPreempt is a research project focused on software-level GPU preemption that does not require any kind of modification to hardware, system software (kernel), and user code. It intercepts OpenCL API calls from the user process and schedules it based on process priority for GPU preemption.
+
 This work has been **accepted for publication at [IEEE AIoT 2025](https://www.ieet.org/aiot2025)**, where it will be presented.
 
 ## Features
